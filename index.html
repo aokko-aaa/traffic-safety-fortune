@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日の交通運勢</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --yellow:  #EAEA00;
+      --yellow2: #C8C800;
+      --blue:    #1A3808;
+      --blue2:   #2A5010;
+      --sky:     #FFFDE7;
+      --white:   #FFFFFF;
+      --dark:    #1A3808;
+      --pop-shadow: 4px 4px 0px var(--dark);
+    }
+
+    body {
+      font-family: 'Nunito', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+      background-color: var(--yellow);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--dark);
+      padding: 24px 0;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 520px;
+      text-align: center;
+    }
+
+    /* ヘッダー */
+    header {
+      margin-bottom: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .header-badge {
+      display: inline-block;
+      background: var(--blue);
+      color: var(--yellow);
+      font-size: 0.75rem;
+      font-weight: 900;
+      letter-spacing: 3px;
+      padding: 4px 14px;
+      border-radius: 999px;
+      border: 2px solid var(--dark);
+      box-shadow: 2px 2px 0 var(--dark);
+      margin-bottom: 10px;
+    }
+
+    header h1 {
+      font-size: 2.2rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: var(--dark);
+      text-shadow: 3px 3px 0 rgba(0,0,0,0.15);
+      margin-bottom: 6px;
+    }
+
+    header p {
+      font-size: 0.88rem;
+      color: var(--dark);
+      font-weight: 700;
+      opacity: 0.75;
+    }
+
+    /* メインカード */
+    .card {
+      background: var(--white);
+      border: 3px solid var(--dark);
+      border-radius: 24px;
+      padding: 32px 28px;
+      box-shadow: 6px 6px 0 var(--dark);
+      position: relative;
+    }
+
+    .card::before {
+      content: "✦";
+      position: absolute;
+      top: -14px; left: 20px;
+      background: var(--yellow);
+      border: 2px solid var(--dark);
+      border-radius: 50%;
+      width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem;
+      line-height: 28px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: var(--dark);
+      margin-bottom: 6px;
+      text-align: left;
+      letter-spacing: 1px;
+    }
+
+    input[type="text"], input[type="date"], select {
+      width: 100%;
+      padding: 11px 16px;
+      border-radius: 12px;
+      border: 2.5px solid var(--dark);
+      background: var(--sky);
+      color: var(--dark);
+      font-size: 1rem;
+      font-family: inherit;
+      font-weight: 700;
+      margin-bottom: 16px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      box-shadow: 3px 3px 0 var(--dark);
+    }
+
+    input[type="text"]:focus, input[type="date"]:focus, select:focus {
+      border-color: var(--dark);
+      box-shadow: 3px 3px 0 var(--yellow2);
+    }
+
+    select option { background: var(--white); color: var(--dark); }
+
+    button#fortuneBtn {
+      width: 100%;
+      padding: 15px;
+      background: var(--yellow);
+      border: 3px solid var(--dark);
+      border-radius: 14px;
+      color: var(--dark);
+      font-size: 1.15rem;
+      font-weight: 900;
+      font-family: inherit;
+      letter-spacing: 3px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 5px 5px 0 var(--dark);
+    }
+
+    button#fortuneBtn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 7px 7px 0 var(--dark);
+    }
+
+    button#fortuneBtn:active {
+      transform: translate(3px, 3px);
+      box-shadow: 2px 2px 0 var(--dark);
+    }
+
+    /* 結果エリア */
+    #result {
+      display: none;
+      margin-top: 24px;
+      animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.85); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    .result-card {
+      background: var(--yellow);
+      border: 4px solid var(--dark);
+      border-radius: 24px;
+      padding: 28px 22px;
+      box-shadow: 6px 6px 0 var(--dark);
+      color: var(--dark);
+    }
+
+    .hero-img {
+      width: 160px;
+      max-width: 55%;
+      margin-bottom: 10px;
+      filter: drop-shadow(4px 4px 0 rgba(0,0,0,0.15));
+    }
+
+    .result-char {
+      width: 160px;
+      max-width: 55%;
+      margin-bottom: 10px;
+      animation: bounce 1.2s ease-in-out infinite alternate;
+      filter: drop-shadow(3px 3px 0 rgba(0,0,0,0.2));
+    }
+
+    .fortune-desc {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--dark);
+      opacity: 0.8;
+      margin-bottom: 14px;
+    }
+
+    @keyframes bounce {
+      from { transform: translateY(0); }
+      to   { transform: translateY(-8px); }
+    }
+
+    .overall {
+      font-size: 1.45rem;
+      font-weight: 900;
+      margin-bottom: 4px;
+      color: var(--dark);
+      text-shadow: none;
+    }
+
+    .stars {
+      font-size: 1.8rem;
+      margin-bottom: 18px;
+      letter-spacing: 4px;
+      color: var(--dark);
+    }
+
+    .categories {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .cat-item {
+      background: rgba(255,255,255,0.5);
+      border: 2px solid var(--dark);
+      border-radius: 12px;
+      padding: 10px 8px;
+      font-size: 0.82rem;
+    }
+
+    .cat-item .cat-name { color: var(--dark); margin-bottom: 4px; font-weight: 800; }
+    .cat-item .cat-stars { font-size: 1rem; letter-spacing: 2px; color: var(--dark); }
+
+    .advice {
+      background: var(--white);
+      border: 2px solid var(--dark);
+      border-radius: 12px;
+      padding: 14px 16px;
+      text-align: left;
+      font-size: 0.92rem;
+      line-height: 1.75;
+      margin-bottom: 16px;
+      color: var(--dark);
+      font-weight: 700;
+      box-shadow: 3px 3px 0 var(--dark);
+      position: relative;
+    }
+
+    .advice::before {
+      content: "💡 今日のアドバイス";
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 900;
+      color: var(--dark);
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .lucky {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .lucky-item {
+      background: var(--yellow);
+      border: 2px solid var(--dark);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 0.78rem;
+      font-weight: 900;
+      color: var(--dark);
+      box-shadow: 2px 2px 0 var(--dark);
+      flex: 1;
+      min-width: 90px;
+    }
+
+    .lucky-item .lucky-label { color: var(--dark); font-size: 0.7rem; margin-bottom: 2px; opacity: 0.65; }
+    .lucky-item .lucky-val   { font-size: 1rem; }
+
+    button#resetBtn {
+      margin-top: 18px;
+      background: var(--white);
+      border: 3px solid var(--dark);
+      color: var(--dark);
+      padding: 11px 32px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 900;
+      font-family: inherit;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 4px 4px 0 var(--dark);
+    }
+
+    button#resetBtn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 var(--dark);
+    }
+
+    button#resetBtn:active {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0 var(--dark);
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <img src="車人間.png" alt="ドライバーキャラクター" class="hero-img">
+    <div class="header-badge">TRAFFIC FORTUNE</div>
+    <h1>🏁今日の運勢🏁</h1>
+    <p>今日のあなたの交通安全運勢を占います</p>
+  </header>
+
+  <div class="card">
+    <label for="nameInput">あだ名・ニックネーム</label>
+    <input type="text" id="nameInput" placeholder="例：たろう、みーちゃん">
+
+    <label for="plateNum">車のナンバー4桁</label>
+    <input type="text" id="plateNum" placeholder="例：1234" maxlength="4" inputmode="numeric">
+
+    <button id="fortuneBtn" onclick="runFortune()">🚗 今日の運勢を占う！</button>
+  </div>
+
+  <div id="result">
+    <div class="result-card">
+      <img src="車人間.png" alt="ドライバー" class="result-char">
+      <div class="overall" id="fortuneTitle"></div>
+      <div class="stars" id="overallStars"></div>
+      <div class="fortune-desc" id="fortuneDesc"></div>
+
+      <div class="categories" id="categories"></div>
+
+      <div class="advice" id="adviceText"></div>
+
+      <div class="lucky">
+        <div class="lucky-item">
+          <div class="lucky-label">ラッキーカラー</div>
+          <div class="lucky-val" id="luckyColor"></div>
+        </div>
+        <div class="lucky-item">
+          <div class="lucky-label">ラッキーナンバー</div>
+          <div class="lucky-val" id="luckyNumber"></div>
+        </div>
+        <div class="lucky-item">
+          <div class="lucky-label">注意時間帯</div>
+          <div class="lucky-val" id="cautionTime"></div>
+        </div>
+      </div>
+    </div>
+    <button id="resetBtn" onclick="resetForm()">もう一度占う</button>
+  </div>
+</div>
+
+<script>
+  const FORTUNES = [
+    { title: "🚗 本日スイスイ運",           desc: "信号の流れに愛される日" },
+    { title: "🚗 白線センター賞",            desc: "駐車がやたら美しく決まる" },
+    { title: "🚗 縁石回避モード",            desc: "今日は左下をちょっと意識すると◎" },
+    { title: "🚗 イオン屋上の主",            desc: "遠い場所ほど空いている運命" },
+    { title: "🚗 謎に道ゆずられる日",        desc: "車線変更がいつもより平和" },
+    { title: "🚗 ガソリンまだいける判定",    desc: "でも給油ランプとは相談推奨" },
+    { title: "🚗 ベテランドライバー感",      desc: "落ち着いて見えるオーラ強め" },
+    { title: "🚗 ナビとの和解日",            desc: "今日はちゃんと案内を聞こう" },
+    { title: "🚗 コンビニ駐車エリート",      desc: "一番停めやすい場所を引き当てる" },
+    { title: "🚗 ワイパー仕事デー",          desc: "急な雨に備えると安心" },
+    { title: "🚗 軽トラの神に守られている日",desc: "農道も住宅街もなんか安心" },
+    { title: "🚗 今日は右折がキレッキレ",   desc: "タイミング感覚◎" },
+    { title: "🚗 車内BGM優勝日",            desc: "いつもの曲が3割増しで良い" },
+    { title: "🚗 眠気注意モード",            desc: "窓開けると世界が変わる" },
+    { title: "🚗 道路のヌシ覚醒",            desc: "どこ行っても落ち着いて走れる" },
+    { title: "🚗 今日だけF1気分",           desc: "でも安全運転推奨" },
+    { title: "🚗 バック駐車修行編",          desc: "今日は慎重くらいでちょうどいい" },
+    { title: "🚗 コストコ渋滞耐性MAX",      desc: "待てる心が試される日" },
+    { title: "🚗 ハザード感謝デー",          desc: "譲り合いで運気アップ" },
+    { title: "🚗 洗車したくなる指数98％",   desc: "鳥フンに気をつけて" },
+    { title: "🚗 タイヤいたわり週間",        desc: "段差をやさしく越えると吉" },
+    { title: "🚗 方向音痴封印中",            desc: "今日は意外と迷わない" },
+    { title: "🚗 すれ違いざま同車種遭遇デー",desc: "妙な仲間意識が芽生える" },
+    { title: "🚗 助手席トーク当たり日",      desc: "移動中がいちばん楽しい" },
+    { title: "🚗 名古屋走り封印モード",      desc: "落ち着いた人が勝つ日" },
+    { title: "🚗 信号タイミング悪い選手権",  desc: "焦らないほうが結果早い" },
+    { title: "🚗 今日の駐車場、狭めです",    desc: "深呼吸推奨" },
+    { title: "🚗 スーパーはしご適性高め",    desc: "小回りの才能が光る" },
+    { title: "🚗 まぁ大丈夫だろう危険報知機",desc: "確認多めが正解" },
+    { title: "🚗 今日の愛車ごきげん指数高め",desc: "ちょっとだけ優しく運転すると喜びます" },
+  ];
+
+  const ADVICE = [
+    "今日も無事故で、気分よく帰ってきましょう！",
+    "急がなくても、だいたい間に合います。",
+    "ウインカー、たぶん未来の自分を救います。",
+    "車間距離は、心の余裕。",
+    "その「いけるかも」を一回だけ疑ってみましょう。",
+    "縁石は今日も静かに待っています。",
+    "曲がる前の確認、未来の拍手につながります。",
+    "今日の敵は眠気と「あとで給油しよう」。",
+    "焦ると赤信号、落ち着くと青信号。たぶん。",
+    "愛車もたまには優しく運転してほしいそうです。",
+    "バック駐車、今日は深呼吸してからどうぞ。",
+    "急ブレーキより、早めのあきらめ。",
+    "そのショートカット、本当に近道ですか？",
+    "だいたいのことは、一旦止まると解決します。",
+    "今日も「譲れる大人」でいきましょう。",
+    "コンビニ駐車場にもドラマがあります。",
+    "運転中のひとりごとは、意外と聞かれてません。安心してください。",
+    "ガソリン半分、心の余裕も半分。",
+    "安全運転で。あと段差にはちょっとやさしく。",
+    "今日も無事に帰宅して、「おつかれ自分」しましょう！",
+  ];
+
+  const CATEGORIES = [
+    { name: "注意力運",   icon: "👁️" },
+    { name: "駐車センス", icon: "🅿️" },
+    { name: "信号運",     icon: "🚦" },
+    { name: "ゆとり運",   icon: "😌" },
+  ];
+
+  const COLORS = ["赤","青","黄","緑","白","オレンジ","紫","ゴールド","シルバー","ピンク"];
+  const TIMES  = ["7〜9時","12〜13時","17〜19時","21〜22時","深夜0時以降"];
+  const LUCKY_ROADS = ["バイパス","抜け道","高速","国道","裏道"];
+
+  function seededRand(seed) {
+    let s = seed;
+    return () => {
+      s = (s * 1664525 + 1013904223) & 0xffffffff;
+      return (s >>> 0) / 0xffffffff;
+    };
+  }
+
+  function makeStars(n, max = 5) {
+    return "★".repeat(n) + "☆".repeat(max - n);
+  }
+
+  function runFortune() {
+    const name  = document.getElementById("nameInput").value.trim();
+    const plate = document.getElementById("plateNum").value.trim();
+
+    if (!name)  { alert("あだ名を入力してください"); return; }
+    if (!/^\d{4}$/.test(plate)) { alert("ナンバーは4桁の数字で入力してください"); return; }
+
+    const today = new Date().toISOString().slice(0, 10);
+    const seedStr = name + plate + today;
+    let hash = 0;
+    for (let i = 0; i < seedStr.length; i++) {
+      hash = ((hash << 5) - hash + seedStr.charCodeAt(i)) | 0;
+    }
+    const rand = seededRand(Math.abs(hash));
+
+    const fortune    = FORTUNES[Math.floor(rand() * FORTUNES.length)];
+    const starRank   = Math.max(1, Math.min(5, Math.floor(rand() * 5) + 1));
+    const luckyColor = COLORS[Math.floor(rand() * COLORS.length)];
+    const luckyNum   = Math.floor(rand() * 9) + 1;
+    const cautionTime= TIMES[Math.floor(rand() * TIMES.length)];
+    const luckyRoad  = LUCKY_ROADS[Math.floor(rand() * LUCKY_ROADS.length)];
+
+    const catStars = CATEGORIES.map(c => ({
+      ...c,
+      stars: Math.max(1, Math.min(5, Math.floor(rand() * 5) + 1))
+    }));
+
+    document.getElementById("fortuneTitle").textContent = `${name}さんの今日の運勢`;
+    document.getElementById("overallStars").textContent = fortune.title;
+    document.getElementById("fortuneDesc").textContent  = fortune.desc;
+
+    const catContainer = document.getElementById("categories");
+    catContainer.innerHTML = catStars.map(c => `
+      <div class="cat-item">
+        <div class="cat-name">${c.icon} ${c.name}</div>
+        <div class="cat-stars">${makeStars(c.stars)}</div>
+      </div>
+    `).join("");
+
+    const advice = ADVICE[Math.floor(rand() * ADVICE.length)];
+    document.getElementById("adviceText").textContent = advice;
+    document.getElementById("luckyColor").textContent  = luckyColor;
+    document.getElementById("luckyNumber").textContent = luckyNum;
+    document.getElementById("cautionTime").textContent = cautionTime;
+
+    document.getElementById("result").style.display = "block";
+    document.getElementById("result").scrollIntoView({ behavior: "smooth" });
+  }
+
+  function resetForm() {
+    document.getElementById("result").style.display = "none";
+    document.getElementById("nameInput").value = "";
+    document.getElementById("plateNum").value  = "";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+</script>
+</body>
+</html>
